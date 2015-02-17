@@ -99,7 +99,7 @@ while True:
         # if(Check(data, "about")):
             # Send(channel, "I'm a IRC Bot programmed for the subreddit /r/WatchPeopleCode")
         if(Check(data, "eye") and Check(data, "on") and Check(data, "hcwool")):
-            Send(channel, "I'll keep an eye on him for you ◉_◉")
+            Send(channel, "I'll keep an eye on him for you")
         if(Check(data, "is") and Check(data, "hcwool") and Check(data, "takeover")):
             Send(channel, "Yes, but his attempts are futile")
 
