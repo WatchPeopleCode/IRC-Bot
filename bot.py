@@ -77,7 +77,7 @@ irc.send(bytes("JOIN " + channel + "\r\n", "UTF-8"))
 lastTime = time()
 newCacheLiveStreams = JSONtoSet(GetJSON())
 cacheLiveStreams = newCacheLiveStreams
-
+fileWriter = open("log.txt", "w")
 
 print("ENTERING LOOP NOW")
 print(newCacheLiveStreams)
@@ -104,6 +104,10 @@ while True:
             Send(channel, "I'll keep an eye on him for you")
         if(Check(data, "is") and Check(data, "hcwool") and Check(data, "takeover")):
             Send(channel, "Yes, but his attempts are futile")
+        if(Check(data, "print") and Check(data, "log")):
+            fileReader = open("log.txt", "r")
+            for line in fileReader:
+                print(line)
 
     '''
     Attempting to check if there is a new livestream in the list, then notify IRC
@@ -121,6 +125,10 @@ while True:
                 Send(channel, '"' + obj['title'] + '" just went live!, check it out here: ' + obj['url'])
         cacheLiveStreams = newCacheLiveStreams
 
+    fileWriter.write("\n" + data)
+
+
+# GCD
 # Call Admins
 # Uptime
 # Notify user when there were talked about
