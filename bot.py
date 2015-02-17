@@ -5,6 +5,7 @@ Tuck made this thing
 # Imports
 import socket
 import requests
+import os
 from time import time
 
 # Vars
@@ -75,6 +76,8 @@ lastTime = time()
 newCacheLiveStreams = JSONtoSet(GetJSON())
 cacheLiveStreams = newCacheLiveStreams
 
+password = os.environ['IRC_PASSWORD']
+
 while True:
     data = irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
     if(data.find("PING") != -1):
@@ -92,8 +95,8 @@ while True:
             SendUpcomingStreams()
         if(Check(data, "answer") and Check(data, "to") and Check(data, "life")):
             Send(channel, "According to my memory bank, the answer is 42.")
-        #if(Check(data, "about")):
-            #Send(channel, "I'm a IRC Bot programmed for the subreddit /r/WatchPeopleCode")
+        # if(Check(data, "about")):
+            # Send(channel, "I'm a IRC Bot programmed for the subreddit /r/WatchPeopleCode")
         if(Check(data, "eye") and Check(data, "on") and Check(data, "hcwool")):
             Send(channel, "I'll keep an eye on him for you ◉_◉")
         if(Check(data, "is") and Check(data, "hcwool") and Check(data, "takeover")):
