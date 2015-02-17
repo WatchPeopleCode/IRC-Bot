@@ -78,6 +78,7 @@ cacheLiveStreams = newCacheLiveStreams
 
 password = os.environ['IRC_PASSWORD']
 
+print("ENTERING LOOP NOW")
 while True:
     data = irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
     if(data.find("PING") != -1):
