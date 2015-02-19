@@ -2,129 +2,143 @@
 Tuck made this thing
 '''
 
-# Imports
+
 import socket
 import requests
 import os
 from time import time
-
-# Vars
-HOST = "irc.freenode.net"
-PORT = 6667
-username = "TuckBot"
-master = "tuckismad"
-channel = "#WatchPeopleCode"
-password = ""
-irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-irc.connect((HOST, PORT))
+from flask import Flask, render_template
+from multiprocessing import Process
 
 previousStreamsLink = "http://www.watchpeoplecode.com/past_streams"
 apiUrl = "http://www.watchpeoplecode/json"
 
 
-# Functions
-def Send(name, message):
-    irc.send(bytes("PRIVMSG " + name + " :" + message + "\r\n", "UTF-8"))
+class Website:
+    def __init__(self, bot):
+        self.logs = bot.logs
+
+        self.app = Flask(__name__)
+
+        @self.app.route('/')
+        def home():
+            return render_template("log.html", logs=self.logs)
+
+    def Run(self):
+            self.app.run(debug=True)
 
 
-def Check(data, cmd):
-    data = data.lower()
-    cmd = cmd.lower()
-    if(data.find(cmd) != -1):
-        return True
-    else:
-        return False
+class Bot:
+    logs = ['test', 'test2']
+
+    def __init__(self):
+        self.HOST = "irc.freenode.net"
+        self.PORT = 6667
+        self.username = "TuckBot_Local"
+        self.master = "tuckismad"
+        self.channel = "#WpcBotTesting"
+        self.password = ""
+        self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.irc.connect((self.HOST, self.PORT))
+        if os.environ.get('IRC_PASSWORD'):
+            self.password = os.environ['IRC_PASSWORD']
+
+        self.irc.send(bytes("NICK " + self.username + "\r\n", "UTF-8"))
+        self.irc.send(bytes("USER " + self.username + " " + self.username + " " + self.username + " :PythonBot\r\n", "UTF-8"))
+        self.irc.send(bytes("PRIVMSG nickserv :identify " + self.password + "\r\n", "UTF-8"))
+        self.irc.send(bytes("JOIN " + self.channel + "\r\n", "UTF-8"))
+        self.lastTime = time()
+        self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
+        self.cacheLiveStreams = self.newCacheLiveStreams
+
+    def Send(self, name, message):
+        self.irc.send(bytes("PRIVMSG " + name + " :" + message + "\r\n", "UTF-8"))
+
+    def Check(self, data, cmd):
+        data = data.lower()
+        cmd = cmd.lower()
+        if(data.find(cmd) != -1):
+            return True
+        else:
+            return False
+
+    def GetJSON(self, ):
+        return requests.get('http://www.watchpeoplecode.com/json').json()
+
+    def JSONtoSet(self, jsonObject):
+        li = []
+        for obj in jsonObject['live']:
+            li.append(obj)
+        return li
+
+    def SendLiveStreams(self):
+        response = self.GetJSON()
+        if response['live'] == []:
+            self.Send(self.channel, "No current streams available :(")
+        else:
+            for obj in response['live']:
+                self.Send(self.channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+
+    def SendUpcomingStreams(self):
+        response = self.GetJSON()
+        if response['upcoming'] == []:
+            self.Send(self.channel, "There are no upcoming streams :(")
+        else:
+            for obj in response['upcoming']:
+                self.Send(self.channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+
+    def Run(self):
+        while True:
+            data = self.irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
+            if(data.find("PING") != -1):
+                self.irc.send(bytes("PONG " + data.split()[1] + "\r\n", "UTF-8"))
+
+            if(self.Check(data, self.username)):
+                if(self.Check(data, "previous") and self.Check(data, "streams")):
+                    self.Send(self.channel, previousStreamsLink)
+                if(self.Check(data, "what") and self.Check(data, "commands")):  # make dict of commands and output
+                    self.Send(self.channel, "That is for me to know and you to find out when Tuck programs me to tell you ;)")
+                if(self.Check(data, "current") and self.Check(data, "streams")):
+                    self.SendLiveStreams()
+                if(self.Check(data, "upcoming") and self.Check(data, "streams")):
+                    self.SendUpcomingStreams()
+                if(self.Check(data, "answer") and self.Check(data, "to") and self.Check(data, "life")):
+                    self.Send(self.channel, "According to my memory bank, the answer is 42.")
+                if(self.Check(data, "eye") and self.Check(data, "on") and self.Check(data, "hcwool")):
+                    self.Send(self.channel, "I'll keep an eye on him for you")
+                if(self.Check(data, "is") and self.Check(data, "hcwool") and self.Check(data, "takeover")):
+                    self.Send(self.channel, "Yes, but his attempts are futile")
+
+            '''
+            Attempting to check if there is a new livestream in the list, then notify IRC
+            Note: Should probably do something with async
+            '''
+            if time() >= self.lastTime + 10:
+                self.lastTime = time()
+                newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
+                for obj in newCacheLiveStreams:
+                    found = False
+                    for obj2 in self.cacheLiveStreams:
+                        if obj == obj2:
+                            found = True
+                    if not found:
+                        self.Send(self.channel, '"' + obj['title'] + '" just went live!, check it out here: ' + obj['url'])
+                self.cacheLiveStreams = newCacheLiveStreams
+            self.logs.append(data)
+
+if __name__ == '__main__':
+    bot = Bot()
+    p1 = Process(target=bot.Run)
+    p1.start()
+
+    website = Website(bot)
+    p2 = Process(target=website.Run)
+    p2.start()
 
 
-def GetJSON():
-    return requests.get('http://www.watchpeoplecode.com/json').json()
-
-
-def JSONtoSet(jsonObject):
-    li = []
-    for obj in jsonObject['live']:
-        li.append(obj)
-    return li
-
-
-def SendLiveStreams():
-    response = GetJSON()
-    if response['live'] == []:
-        Send(channel, "No current streams available :(")
-    else:
-        for obj in response['live']:
-            Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
-
-
-def SendUpcomingStreams():
-    response = GetJSON()
-    if response['upcoming'] == []:
-        Send(channel, "There are no upcoming streams :(")
-    else:
-        for obj in response['upcoming']:
-            Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
-
-
-password = os.environ['IRC_PASSWORD']
-
-# Main
-irc.send(bytes("NICK " + username + "\r\n", "UTF-8"))
-irc.send(bytes("USER " + username + " " + username + " " + username + " :PythonBot\r\n", "UTF-8"))
-irc.send(bytes("PRIVMSG nickserv :identify " + password + "\r\n", "UTF-8"))
-irc.send(bytes("JOIN " + channel + "\r\n", "UTF-8"))
-# irc.send(bytes("PRIVMSG " + master + " :Hello ;), I'm Alive\r\n", "UTF-8"))
-
-lastTime = time()
-newCacheLiveStreams = JSONtoSet(GetJSON())
-cacheLiveStreams = newCacheLiveStreams
-logHandler = open("log.txt", "a+")
-
-while True:
-    data = irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
-    if(data.find("PING") != -1):
-        irc.send(bytes("PONG " + data.split()[1] + "\r\n", "UTF-8"))
-
-    # Commands
-    if(Check(data, username)):
-        if(Check(data, "previous") and Check(data, "streams")):
-            Send(channel, previousStreamsLink)
-        if(Check(data, "what") and Check(data, "commands")):  # make dict of commands and output
-            Send(channel, "That is for me to know and you to find out when Tuck programs me to tell you ;)")
-        if(Check(data, "current") and Check(data, "streams")):
-            SendLiveStreams()
-        if(Check(data, "upcoming") and Check(data, "streams")):
-            SendUpcomingStreams()
-        if(Check(data, "answer") and Check(data, "to") and Check(data, "life")):
-            Send(channel, "According to my memory bank, the answer is 42.")
-        # if(Check(data, "about")):
-            # Send(channel, "I'm a IRC Bot programmed for the subreddit /r/WatchPeopleCode")
-        if(Check(data, "eye") and Check(data, "on") and Check(data, "hcwool")):
-            Send(channel, "I'll keep an eye on him for you")
-        if(Check(data, "is") and Check(data, "hcwool") and Check(data, "takeover")):
-            Send(channel, "Yes, but his attempts are futile")
-        if(Check(data, "print") and Check(data, "log")):
-            logHandler.seek(0)
-            for line in logHandler:
-                print(line)
-
-    '''
-    Attempting to check if there is a new livestream in the list, then notify IRC
-    Note: Should probably do something with async
-    '''
-    if time() >= lastTime + 10:
-        lastTime = time()
-        newCacheLiveStreams = JSONtoSet(GetJSON())
-        for obj in newCacheLiveStreams:
-            found = False
-            for obj2 in cacheLiveStreams:
-                if obj == obj2:
-                    found = True
-            if not found:
-                Send(channel, '"' + obj['title'] + '" just went live!, check it out here: ' + obj['url'])
-        cacheLiveStreams = newCacheLiveStreams
-    logHandler.seek(0)
-    logHandler.write("\n" + data)
-
+# logHandler = open("log.txt", "a+")
+# logHandler.seek(0)
+# logHandler.write("\n" + data)
 
 # break messages with string delimiter for logging
 # GCD
@@ -134,3 +148,5 @@ while True:
 # Timer converter
 # Regex
 # Log
+# timezones
+# add relationship level counter for Tyrant <3 ;)

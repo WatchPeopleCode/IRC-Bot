@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logs</title>
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+    <div class="container">
+        <h1>Logs</h1>
+        <hr>
+        {% for line in logs %}
+            <p>{{line}}</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
