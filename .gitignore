@@ -44,5 +44,5 @@ Temporary Items
 
 
 /venv
-bot.sublime-workspace
-log.txt
+*.sublime-workspace
+*.txt
