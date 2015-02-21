@@ -41,6 +41,8 @@ def GetJSON():
 
 
 def JSONtoSet(jsonObject):
+    if jsonObject['error']:
+        return []
     li = []
     for obj in jsonObject['live']:
         li.append(obj)
@@ -65,7 +67,8 @@ def SendUpcomingStreams():
             Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
 
 
-password = os.environ['IRC_PASSWORD']
+if os.environ.get('IRC_PASSWORD'):
+    password = os.environ['IRC_PASSWORD']
 
 # Main
 irc.send(bytes("NICK " + username + "\r\n", "UTF-8"))
