@@ -77,7 +77,6 @@ def SendUpcomingStreams():
         Send(channel, "An unknown error has occured")
 
 
-
 if os.environ.get('IRC_PASSWORD'):
     password = os.environ['IRC_PASSWORD']
 
@@ -91,7 +90,6 @@ irc.send(bytes("JOIN " + channel + "\r\n", "UTF-8"))
 lastTime = time()
 newCacheLiveStreams = JSONtoSet(GetJSON())
 cacheLiveStreams = newCacheLiveStreams
-logHandler = open("log.txt", "a+")
 
 while True:
     data = irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
@@ -116,10 +114,6 @@ while True:
             Send(channel, "I'll keep an eye on him for you")
         if(Check(data, "is") and Check(data, "hcwool") and Check(data, "takeover")):
             Send(channel, "Yes, but his attempts are futile")
-        if(Check(data, "print") and Check(data, "log")):
-            logHandler.seek(0)
-            for line in logHandler:
-                print(line)
 
     '''
     Attempting to check if there is a new livestream in the list, then notify IRC
@@ -136,8 +130,6 @@ while True:
             if not found:
                 Send(channel, '"' + obj['title'] + '" just went live!, check it out here: ' + obj['url'])
         cacheLiveStreams = newCacheLiveStreams
-    logHandler.seek(0)
-    logHandler.write("\n" + data)
 
 
 # break messages with string delimiter for logging
