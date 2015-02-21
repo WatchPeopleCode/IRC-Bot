@@ -41,7 +41,7 @@ def GetJSON():
 
 
 def JSONtoSet(jsonObject):
-    if jsonObject['error']:
+    if 'error' in jsonObject:
         return []
     li = []
     for obj in jsonObject['live']:
@@ -51,20 +51,31 @@ def JSONtoSet(jsonObject):
 
 def SendLiveStreams():
     response = GetJSON()
-    if response['live'] == []:
-        Send(channel, "No current streams available :(")
+    if 'live' in response:
+        if response['live'] != []:
+            for obj in response['live']:
+                Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+        elif response['live'] == []:
+            Send(channel, "No current streams available :(")
+    elif 'error' in response:
+        Send(channel, "The JSON API is down. *glares at SilentBunny*")
     else:
-        for obj in response['live']:
-            Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+        Send(channel, "An unknown error has occured")
 
 
 def SendUpcomingStreams():
     response = GetJSON()
-    if response['upcoming'] == []:
-        Send(channel, "There are no upcoming streams :(")
+    if 'upcoming' in response:
+        if response['upcoming'] != []:
+            for obj in response['upcoming']:
+                Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+        elif response['upcoming'] == []:
+            Send(channel, "There are no upcoming streams :(")
+    elif 'error' in response:
+        Send(channel, "The JSON API is down. *glares at SilentBunny*")
     else:
-        for obj in response['upcoming']:
-            Send(channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+        Send(channel, "An unknown error has occured")
+
 
 
 if os.environ.get('IRC_PASSWORD'):
