@@ -16,20 +16,23 @@ apiUrl = "http://www.watchpeoplecode/json"
 
 class Website:
     def __init__(self, bot):
-        self.logs = bot.logs
 
+        self.logs = bot.logs
         self.app = Flask(__name__)
 
         @self.app.route('/')
         def home():
+            print("B")
             return render_template("log.html", logs=self.logs)
+            print("D")
 
     def Run(self):
-            self.app.run(debug=True)
+            self.app.run(debug=False)
+            print("E")
 
 
 class Bot:
-    logs = ['test', 'test2']
+    logs = []
 
     def __init__(self):
         self.HOST = "irc.freenode.net"
@@ -89,7 +92,7 @@ class Bot:
 
     def Run(self):
         while True:
-            data = self.irc.recv(4096).decode("UTF-8")  # Sometimes i get this error: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe5 in position 1804: invalid continuation byte
+            data = self.irc.recv(4096).decode("UTF-8")
             if(data.find("PING") != -1):
                 self.irc.send(bytes("PONG " + data.split()[1] + "\r\n", "UTF-8"))
 
