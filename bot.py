@@ -22,13 +22,10 @@ class Website:
 
         @self.app.route('/')
         def home():
-            print("B")
             return render_template("log.html", logs=self.logs)
-            print("D")
 
     def Run(self):
             self.app.run(debug=False)
-            print("E")
 
 
 class Bot:
@@ -41,6 +38,9 @@ class Bot:
         self.master = "tuckismad"
         self.channel = "#WpcBotTesting"
         self.password = ""
+        self.lastTime = time()
+        self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
+        self.cacheLiveStreams = self.newCacheLiveStreams
         self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.irc.connect((self.HOST, self.PORT))
         if os.environ.get('IRC_PASSWORD'):
@@ -50,9 +50,6 @@ class Bot:
         self.irc.send(bytes("USER " + self.username + " " + self.username + " " + self.username + " :PythonBot\r\n", "UTF-8"))
         self.irc.send(bytes("PRIVMSG nickserv :identify " + self.password + "\r\n", "UTF-8"))
         self.irc.send(bytes("JOIN " + self.channel + "\r\n", "UTF-8"))
-        self.lastTime = time()
-        self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
-        self.cacheLiveStreams = self.newCacheLiveStreams
 
     def Send(self, name, message):
         self.irc.send(bytes("PRIVMSG " + name + " :" + message + "\r\n", "UTF-8"))
@@ -69,10 +66,10 @@ class Bot:
         return requests.get('http://www.watchpeoplecode.com/json').json()
 
     def JSONtoSet(self, jsonObject):
-        li = []
-        for obj in jsonObject['live']:
-            li.append(obj)
-        return li
+        result = []
+        for row in jsonObject['live']:
+            result.append(row)
+        return result
 
     def SendLiveStreams(self):
         response = self.GetJSON()
@@ -89,6 +86,25 @@ class Bot:
         else:
             for obj in response['upcoming']:
                 self.Send(self.channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
+
+    def ParseData(self, data):
+        parsed = data.split(':')
+        result = []
+
+        if '' in parsed:
+            parsed.remove('')
+        try:
+            if 'PRIVMSG' in parsed[0]:
+                while len(parsed) >= 2:
+                    sender = parsed[0].split('!')[0]
+                    message = parsed[1].split('\r\n')[0]
+                    result.append({'sender': sender, 'message': message})
+                    if len(parsed) >= 2:
+                        parsed = parsed[2:]
+        except:
+            print("ParseData failed")
+
+        return result
 
     def Run(self):
         while True:
@@ -112,22 +128,21 @@ class Bot:
                 if(self.Check(data, "is") and self.Check(data, "hcwool") and self.Check(data, "takeover")):
                     self.Send(self.channel, "Yes, but his attempts are futile")
 
-            '''
-            Attempting to check if there is a new livestream in the list, then notify IRC
-            Note: Should probably do something with async
-            '''
             if time() >= self.lastTime + 10:
                 self.lastTime = time()
                 newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
-                for obj in newCacheLiveStreams:
-                    found = False
-                    for obj2 in self.cacheLiveStreams:
-                        if obj == obj2:
-                            found = True
-                    if not found:
-                        self.Send(self.channel, '"' + obj['title'] + '" just went live!, check it out here: ' + obj['url'])
+                for newStream in self.newCacheLiveStreams:
+                    for oldStream in self.cacheLiveStreams:
+                        if newStream == oldStream:
+                            break
+                    else:
+                        self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
                 self.cacheLiveStreams = newCacheLiveStreams
-            self.logs.append(data)
+
+            parsedData = self.ParseData(data)
+            if parsedData:
+                for msg in parsedData:
+                    self.logs.append(msg['sender'] + ": " + msg['message'])
 
 if __name__ == '__main__':
     bot = Bot()
