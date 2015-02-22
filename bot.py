@@ -20,7 +20,7 @@ class Website:
         self.app = Flask(__name__)
 
         if os.environ.get('PORT'):
-            self.port = os.environ['PORT']
+            self.port = int(os.environ['PORT'])
 
         @self.app.route('/')
         def home():
