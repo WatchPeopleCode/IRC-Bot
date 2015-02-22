@@ -18,9 +18,7 @@ class Website:
     def __init__(self, bot):
         self.logs = bot.logs
         self.app = Flask(__name__)
-
-        if os.environ.get('PORT'):
-            self.port = int(os.environ['PORT'])
+        self.port = int(os.environ.get('PORT', 5000))
 
         @self.app.route('/')
         def home():
@@ -36,17 +34,15 @@ class Bot:
     def __init__(self):
         self.HOST = "irc.freenode.net"
         self.PORT = 6667
-        self.username = "TuckBot"
+        self.username = os.environ.get('BOT_USERNAME', 'TuckBot_Local')
         self.master = "tuckismad"
-        self.channel = "#WatchPeopleCode"
-        self.password = ""
+        self.channel = os.environ.get('IRC_CHANNEL', '#WpcBotTesting')
+        self.password = os.environ.get('IRC_PASSWORD', '')
         self.lastTime = time()
         self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
         self.cacheLiveStreams = self.newCacheLiveStreams
         self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.irc.connect((self.HOST, self.PORT))
-        if os.environ.get('IRC_PASSWORD'):
-            self.password = os.environ['IRC_PASSWORD']
 
         self.irc.send(bytes("NICK " + self.username + "\r\n", "UTF-8"))
         self.irc.send(bytes("USER " + self.username + " " + self.username + " " + self.username + " :PythonBot\r\n", "UTF-8"))
@@ -110,7 +106,10 @@ class Bot:
 
     def Run(self):
         while True:
-            data = self.irc.recv(4096).decode("UTF-8")
+            try:
+                data = self.irc.recv(4096).decode("UTF-8")
+            except:
+                print("Decoding Failed")
             if(data.find("PING") != -1):
                 self.irc.send(bytes("PONG " + data.split()[1] + "\r\n", "UTF-8"))
 
@@ -130,16 +129,16 @@ class Bot:
                 if(self.Check(data, "is") and self.Check(data, "hcwool") and self.Check(data, "takeover")):
                     self.Send(self.channel, "Yes, but his attempts are futile")
 
-            if time() >= self.lastTime + 10:
-                self.lastTime = time()
-                newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
-                for newStream in self.newCacheLiveStreams:
-                    for oldStream in self.cacheLiveStreams:
-                        if newStream == oldStream:
-                            break
-                    else:
-                        self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
-                self.cacheLiveStreams = newCacheLiveStreams
+            #if time() >= self.lastTime + 10:
+            #    self.lastTime = time()
+            #    newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
+            #    for newStream in self.newCacheLiveStreams:
+            #        for oldStream in self.cacheLiveStreams:
+            #            if newStream == oldStream:
+            #                break
+            #        else:
+            #            self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
+            #    self.cacheLiveStreams = newCacheLiveStreams
 
             parsedData = self.ParseData(data)
             if parsedData:
