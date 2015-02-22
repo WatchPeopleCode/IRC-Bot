@@ -34,9 +34,9 @@ class Bot:
     def __init__(self):
         self.HOST = "irc.freenode.net"
         self.PORT = 6667
-        self.username = "TuckBot_Local"
+        self.username = "TuckBot"
         self.master = "tuckismad"
-        self.channel = "#WpcBotTesting"
+        self.channel = "#WatchPeopleCode"
         self.password = ""
         self.lastTime = time()
         self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON())
