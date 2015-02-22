@@ -152,4 +152,3 @@ if __name__ == '__main__':
     website = Website(bot)
     p2 = threading.Thread(target=website.Run)
     p2.start()
->>>>>>> origin/experimental
