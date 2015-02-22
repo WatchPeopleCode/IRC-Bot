@@ -25,7 +25,7 @@ class Website:
             return render_template("log.html", logs=self.logs)
 
     def Run(self):
-            self.app.run(debug=False)
+            self.app.run(host='0.0.0.0', port=80)
 
 
 class Bot:
