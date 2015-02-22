@@ -8,7 +8,7 @@ import requests
 import os
 from time import time
 from flask import Flask, render_template
-from multiprocessing import Process
+import threading
 
 previousStreamsLink = "http://www.watchpeoplecode.com/past_streams"
 apiUrl = "http://www.watchpeoplecode/json"
@@ -128,25 +128,9 @@ class Bot:
 
 if __name__ == '__main__':
     bot = Bot()
-    p1 = Process(target=bot.Run)
+    p1 = threading.Thread(target=bot.Run)
     p1.start()
 
     website = Website(bot)
-    p2 = Process(target=website.Run)
+    p2 = threading.Thread(target=website.Run)
     p2.start()
-
-
-# logHandler = open("log.txt", "a+")
-# logHandler.seek(0)
-# logHandler.write("\n" + data)
-
-# break messages with string delimiter for logging
-# GCD
-# Call Admins
-# Uptime
-# Notify user when there were talked about
-# Timer converter
-# Regex
-# Log
-# timezones
-# add relationship level counter for Tyrant <3 ;)
