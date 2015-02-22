@@ -9,6 +9,7 @@ import os
 from time import time
 from flask import Flask, render_template
 import threading
+import re
 
 previousStreamsLink = "http://www.watchpeoplecode.com/past_streams"
 apiUrl = "http://www.watchpeoplecode/json"
@@ -86,22 +87,13 @@ class Bot:
                 self.Send(self.channel, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
 
     def ParseData(self, data):
-        parsed = data.split(':')
         result = []
-
-        if '' in parsed:
-            parsed.remove('')
-        try:
-            if 'PRIVMSG' in parsed[0]:
-                while len(parsed) >= 2:
-                    sender = parsed[0].split('!')[0]
-                    message = parsed[1].split('\r\n')[0]
-                    result.append({'sender': sender, 'message': message})
-                    if len(parsed) >= 2:
-                        parsed = parsed[2:]
-        except:
-            print("ParseData failed")
-
+        sender_pattern = r'^:(.*)!'
+        message_pattern = r'PRIVMSG #?\S* :(.*)'
+        sender_match = re.search(sender_pattern, data)
+        message_match = re.search(message_pattern, data)
+        if sender_match is not None and message_match is not None:
+            result.append({'sender': sender_match.group(1), 'message': message_match.group(1)})
         return result
 
     def Run(self):
