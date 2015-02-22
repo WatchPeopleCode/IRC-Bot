@@ -16,16 +16,18 @@ apiUrl = "http://www.watchpeoplecode/json"
 
 class Website:
     def __init__(self, bot):
-
         self.logs = bot.logs
         self.app = Flask(__name__)
+
+        if os.environ.get('PORT'):
+            self.port = os.environ['PORT']
 
         @self.app.route('/')
         def home():
             return render_template("log.html", logs=self.logs)
 
     def Run(self):
-            self.app.run(host='0.0.0.0', port=80)
+            self.app.run(host='0.0.0.0', port=self.port)
 
 
 class Bot:
