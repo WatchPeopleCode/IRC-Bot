@@ -3,6 +3,7 @@ Tuck made this thing
 '''
 
 # Imports
+import select
 import socket
 import requests
 import os
@@ -114,6 +115,9 @@ class Bot:
         if sender_match is not None and message_match is not None:
             result.append({'sender': sender_match.group(1), 'message': message_match.group(1)})
         return result
+        
+    def WakeUp():
+        return requests.get('http://tuckbot.herokuapp.com') ##put in the url that wakes the bot
 
     '''
     Run()
@@ -122,7 +126,11 @@ class Bot:
     def Run(self):
         while True:
             try:  # Try to decode the incoming data from IRC
-                data = self.irc.recv(4096).decode("UTF-8")
+                if select.select([self.irc], [], [], 300)[0]: #non_blocking check if there is data to read
+                    data = self.irc.recv(4096).decode("UTF-8")
+                else:
+                    self.WakeUp() ##if no data avaliable after 5 mins send wakeup sig 
+                    continue
             except:
                 print("Decoding Failed")
             if(data.find("PING") != -1):  # replies to pings from IRC
