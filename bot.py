@@ -43,6 +43,7 @@ class Bot:
         self.channel = os.environ.get('IRC_CHANNEL', '#WpcBotTesting')  # IRC Channel
         self.password = os.environ.get('IRC_PASSWORD', '')  # Bot Password
         self.lastLivestreamCheck = time()  # Livestream Check Timer
+        self.lastWakeUp = time()  # Wakeup Timer
         self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON(), 'live')  # Cache of new liveStreams
         self.cacheLiveStreams = self.newCacheLiveStreams  # Cache of old liveStreams
         self.shouldCheckForLivestreams = True
@@ -118,6 +119,7 @@ class Bot:
 
     def WakeUp(self):
         return requests.get('http://tuckbot.herokuapp.com')  # put in the url that wakes the bot
+        print("Wake Up")
 
     '''
     Run()
@@ -126,13 +128,13 @@ class Bot:
     def Run(self):
         while True:
             try:  # Try to decode the incoming data from IRC
-                if select.select([self.irc], [], [], 300)[0]:  # non_blocking check if there is data to read
-                    data = self.irc.recv(4096).decode("UTF-8")
-                else:
-                    self.WakeUp()  # if no data avaliable after 5 mins send wakeup sig
-                    continue
-            except:
-                print("Decoding Failed")
+                #if select.select([self.irc], [], [], 10)[0]:  # non_blocking check if there is data to read
+                data = self.irc.recv(4096).decode("UTF-8")
+                #else:
+                #    self.WakeUp()  # if no data avaliable after 5 mins send wakeup sig
+                #    continue
+            except Exception as e:
+                print(e)
             if(data.find("PING") != -1):  # replies to pings from IRC
                 self.irc.send(bytes("PONG " + data.split()[1] + "\r\n", "UTF-8"))
 
@@ -173,6 +175,10 @@ class Bot:
                         else:
                             self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
                     self.cacheLiveStreams = self.newCacheLiveStreams
+
+            if time() >= self.lastWakeUp + 300:
+                self.lastWakeUp = time()
+                self.WakeUp()
 
             parsedData = self.ParseData(data)  # Used for logging to the flask website
             if parsedData:
