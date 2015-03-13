@@ -170,7 +170,7 @@ class Bot:
                     self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON(), 'live')
                     for newStream in self.newCacheLiveStreams:
                         for oldStream in self.cacheLiveStreams:
-                            if newStream.title == oldStream.title and newStream.url == oldStream.url:
+                            if newStream['title'] == oldStream['title'] and newStream['url'] == oldStream['url']:
                                 break
                         else:
                             self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
