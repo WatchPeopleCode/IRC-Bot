@@ -26,7 +26,7 @@ class Bot:
             'livestreamChecker': [self.CheckLiveStreams, time(), 10],
             'hangoutsAnnoucenment': [
                 lambda:
-                self.Send(self.channel, "24/7 Hangouts room, check it out here! http://goo.gl/HkFFqg"), time(), 600]
+                self.Send(self.channel, "24/7 Hangouts room, check it out here! http://goo.gl/HkFFqg"), time(), 1200]
         }
 
         self.host = "irc.freenode.net"
