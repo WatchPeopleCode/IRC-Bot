@@ -110,14 +110,17 @@ class Bot:
                 self.Send(name, ('Name: ' + obj['title'] + ' URL: ' + obj['url']))
 
     def CheckLiveStreams(self):
-        self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON(), 'live')
-        for newStream in self.newCacheLiveStreams:
-            for oldStream in self.cacheLiveStreams:
-                if newStream['title'] == oldStream['title']:
-                    break
-            else:
-                self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
-        self.cacheLiveStreams = self.newCacheLiveStreams
+        try:
+            self.newCacheLiveStreams = self.JSONtoSet(self.GetJSON(), 'live')
+            for newStream in self.newCacheLiveStreams:
+                for oldStream in self.cacheLiveStreams:
+                    if newStream['title'] == oldStream['title']:
+                        break
+                else:
+                    self.Send(self.channel, '"' + newStream['title'] + '" just went live!, check it out here: ' + newStream['url'])
+            self.cacheLiveStreams = self.newCacheLiveStreams
+        except:
+            pass
 
     def Run(self):
         '''
